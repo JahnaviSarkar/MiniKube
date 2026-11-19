@@ -10,7 +10,7 @@ This repository contains the complete implementation and Kubernetes deployment m
 .
 ├── app.py                     # Python Flask application source code
 ├── requirements.txt           # Pinned Python dependencies
-├── Dockerfile                 # Multi-stage/lightweight Docker container build file
+├── Dockerfile                 # Dockerfile for the Flask app
 ├── .dockerignore              # Excludes unnecessary files from container builds
 ├── k8s/                       # Kubernetes resource manifests
 │   ├── secret.yaml            # MongoDB root credentials (Secret)
@@ -178,17 +178,16 @@ curl http://<URL>/data
    docker login
    ```
 2. **Build the Docker Image**:
-   Replace `<your-dockerhub-username>` with your actual Docker Hub username:
    ```bash
-   docker build -t <your-dockerhub-username>/flask-k8s-app:latest .
+   docker build -t jnv03/flask-k8s-app:latest .
    ```
 3. **Push to Docker Hub**:
    ```bash
-   docker push <your-dockerhub-username>/flask-k8s-app:latest
+   docker push jnv03/flask-k8s-app:latest
    ```
 
 ### 2. Updating Deployment YAML
-Open [`k8s/flask-deployment.yaml`](file:///c:/Users/dell/Desktop/MiniKube/k8s/flask-deployment.yaml) and update the `image` field located at `spec.template.spec.containers[0].image`:
+Open [`k8s/flask-deployment.yaml`](file:///c:/Users/dell/Desktop/MiniKube/k8s/flask-deployment.yaml) and ensure the `image` field located at `spec.template.spec.containers[0].image` is set to `jnv03/flask-k8s-app:latest`:
 
 ```yaml
 spec:
@@ -196,7 +195,7 @@ spec:
     spec:
       containers:
         - name: flask-app
-          image: <your-dockerhub-username>/flask-k8s-app:latest # <-- Put your image name here
+          image: jnv03/flask-k8s-app:latest
           imagePullPolicy: IfNotPresent
 ```
 
@@ -204,26 +203,6 @@ After modifying the file, apply the update:
 ```bash
 kubectl apply -f k8s/flask-deployment.yaml
 ```
-
-### 3. Alternative: Build Directly in Minikube (Without Docker Hub Push)
-Minikube can build or load Docker images directly without pushing to Docker Hub:
-
-- **Method A (Minikube Image Build)**:
-  ```bash
-  minikube image build -t flask-k8s-app:latest .
-  ```
-- **Method B (Use Minikube's In-Cluster Docker Daemon)**:
-  In PowerShell:
-  ```powershell
-  & minikube -p minikube docker-env --shell powershell | Invoke-Expression
-  docker build -t flask-k8s-app:latest .
-  ```
-  In Bash / Linux:
-  ```bash
-  eval $(minikube docker-env)
-  docker build -t flask-k8s-app:latest .
-  ```
-  When using this method, leave the image in `flask-deployment.yaml` as `flask-k8s-app:latest` and keep `imagePullPolicy: IfNotPresent`.
 
 ---
 

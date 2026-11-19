@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: flask-app
-          image: flask-k8s-app:latest  # Set to <your-dockerhub-username>/flask-k8s-app:latest if using Docker Hub
+          image: jnv03/flask-k8s-app:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
