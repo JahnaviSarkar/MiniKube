@@ -237,14 +237,14 @@ Kubernetes provides built-in service discovery through cluster DNS (managed by *
    - `nameserver 10.96.0.10`: Points to the CoreDNS cluster service IP.
    - `search default.svc.cluster.local svc.cluster.local cluster.local`: Search domains used to resolve unqualified hostnames.
 3. Fully Qualified Domain Names (FQDN) follow this standardized pattern:
-   $$\text{<service-name>}.\text{<namespace>}.\text{svc}.\text{cluster}.\text{local}$$
+   `<service-name>.<namespace>.svc.cluster.local`
 
 ### 2. Headless Service vs Standard ClusterIP DNS Resolution
 - In a standard **ClusterIP** Service, CoreDNS resolves the service name to a single virtual IP (VIP). `kube-proxy` handles packet routing from that VIP to the individual pod endpoints via iptables/IPVS.
 - In our deployment, `mongodb-service` is defined as a **Headless Service** (`clusterIP: None`):
   - When querying `mongodb-service`, CoreDNS does **not** return a virtual IP; instead, it returns direct DNS `A` records containing the actual IP address(es) of the backing MongoDB pod(s).
   - Individual StatefulSet pods also receive deterministic, stable DNS records:
-    $$\text{mongodb-0}.\text{mongodb-service}.\text{default}.\text{svc}.\text{cluster}.\text{local}$$
+    `mongodb-0.mongodb-service.default.svc.cluster.local`
 
 ### 3. How the Flask App Connects to MongoDB
 In [`k8s/flask-deployment.yaml`](file:///c:/Users/dell/Desktop/MiniKube/k8s/flask-deployment.yaml), the Flask application receives the MongoDB connection string through an environment variable:
@@ -273,7 +273,7 @@ In this project, both Flask and MongoDB containers are configured with:
 - **What it is**: The minimum quantity of compute resources guaranteed to the container.
 - **Role in Scheduling**: `kube-scheduler` calculates the total requested resources on each node. A pod will **only** be placed on a node that has enough unallocated allocatable capacity to satisfy the pod's requests.
 - **HPA Utilization Calculation**: The Horizontal Pod Autoscaler calculates current target utilization as a percentage of the **requested** CPU:
-  $$\text{Utilization \%} = \frac{\text{Current CPU Usage}}{\text{Requested CPU (200m)}} \times 100$$
+  `Utilization % = (Current CPU Usage / Requested CPU) * 100`
   Without explicit CPU requests, the HPA cannot compute utilization percentage and fails to autoscale.
 
 ### 2. Resource Limits (Hard Ceiling / Enforcement)
@@ -282,7 +282,7 @@ In this project, both Flask and MongoDB containers are configured with:
 - **Memory Limits (Incompressible)**: Memory is an incompressible resource. If a container attempts to allocate more memory than its limit (`500M`), the Linux kernel cannot throttle memory; it invokes the Out-Of-Memory (OOM) killer. The container process is killed with `SIGKILL` (status `OOMKilled`, exit code 137).
 
 ### 3. Quality of Service (QoS) Class
-Because both pods define `requests` that are strictly less than `limits` ($200\text{m} < 500\text{m}$ and $250\text{M} < 500\text{M}$), Kubernetes categorizes these pods into the **Burstable** QoS class. This allows workloads to burst into extra available node capacity during traffic spikes while preserving baseline guarantees.
+Because both pods define `requests` that are strictly less than `limits` (`200m < 500m` and `250M < 500M`), Kubernetes categorizes these pods into the **Burstable** QoS class. This allows workloads to burst into extra available node capacity during traffic spikes while preserving baseline guarantees.
 
 ---
 
